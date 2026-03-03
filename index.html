@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opensource4Development — Arxia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blueprint-blue: #162036;
+      --blueprint-dark: #0D1520;
+      --accent-red: #ED1C24;
+      --white: #FFFFFF;
+      --gray-dark: #4A5568;
+      --gray-medium: #A0AEC0;
+      --gray-light: #E2E8F0;
+      --gray-lightest: #F7FAFC;
+      --body-text: #171616;
+      --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --slide-width: 1280px;
+      --slide-height: 720px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-primary);
+      background: #1a1a2e;
+      color: var(--body-text);
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .presentation { position: relative; width: var(--slide-width); height: var(--slide-height); transform-origin: center center; }
+    .slide {
+      position: absolute; top: 0; left: 0;
+      width: var(--slide-width); height: var(--slide-height);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease; overflow: hidden;
+    }
+    .slide.active { opacity: 1; pointer-events: auto; }
+    .slide-content { position: relative; width: 100%; height: 100%; padding: 60px 80px; z-index: 2; }
+
+    /* Blueprint Grids */
+    .bg-light {
+      background-color: var(--white);
+      background-image:
+        linear-gradient(rgba(160,174,192,0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(160,174,192,0.15) 1px, transparent 1px),
+        linear-gradient(rgba(160,174,192,0.30) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(160,174,192,0.30) 1px, transparent 1px);
+      background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    }
+    .bg-dark {
+      background-color: var(--blueprint-dark);
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    }
+    .bg-blue {
+      background-color: var(--blueprint-blue);
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
+    }
+
+    /* Corner Registration Marks */
+    .slide::before, .slide::after, .slide .corner-bl, .slide .corner-br {
+      content: ''; position: absolute; width: 16px; height: 16px; z-index: 3;
+    }
+    .bg-light::before { top: 12px; left: 12px; border-top: 1.5px solid var(--gray-medium); border-left: 1.5px solid var(--gray-medium); }
+    .bg-light::after { top: 12px; right: 12px; border-top: 1.5px solid var(--gray-medium); border-right: 1.5px solid var(--gray-medium); }
+    .bg-light .corner-bl { bottom: 12px; left: 12px; border-bottom: 1.5px solid var(--gray-medium); border-left: 1.5px solid var(--gray-medium); }
+    .bg-light .corner-br { bottom: 12px; right: 12px; border-bottom: 1.5px solid var(--gray-medium); border-right: 1.5px solid var(--gray-medium); }
+    .bg-dark::before, .bg-blue::before { top: 12px; left: 12px; border-top: 1.5px solid rgba(255,255,255,0.2); border-left: 1.5px solid rgba(255,255,255,0.2); }
+    .bg-dark::after, .bg-blue::after { top: 12px; right: 12px; border-top: 1.5px solid rgba(255,255,255,0.2); border-right: 1.5px solid rgba(255,255,255,0.2); }
+    .bg-dark .corner-bl, .bg-blue .corner-bl { bottom: 12px; left: 12px; border-bottom: 1.5px solid rgba(255,255,255,0.2); border-left: 1.5px solid rgba(255,255,255,0.2); }
+    .bg-dark .corner-br, .bg-blue .corner-br { bottom: 12px; right: 12px; border-bottom: 1.5px solid rgba(255,255,255,0.2); border-right: 1.5px solid rgba(255,255,255,0.2); }
+
+    /* Typography */
+    .title-hero { font-family: var(--font-primary); font-weight: 300; font-size: 52px; letter-spacing: -1.5px; line-height: 1.15; }
+    .title-slide { font-family: var(--font-primary); font-weight: 700; font-size: 28px; letter-spacing: -0.5px; line-height: 1.25; color: var(--blueprint-blue); }
+    .title-section { font-family: var(--font-primary); font-weight: 600; font-size: 20px; color: var(--blueprint-blue); }
+    .body-text { font-family: var(--font-primary); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--gray-dark); }
+    .mono-label { font-family: var(--font-mono); font-weight: 400; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray-medium); }
+    .mono-annotation { font-family: var(--font-mono); font-weight: 400; font-size: 10px; color: var(--gray-medium); }
+    .accent-line { width: 48px; height: 3px; background: var(--accent-red); margin-top: 12px; margin-bottom: 20px; }
+
+    /* Layout Helpers */
+    .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .three-column { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; }
+    .four-column { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+    .metric-card { background: var(--gray-lightest); border: 1px solid var(--gray-light); border-radius: 4px; padding: 20px; }
+    .metric-card .value { font-family: var(--font-primary); font-weight: 700; font-size: 32px; color: var(--blueprint-blue); }
+    .metric-card .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray-medium); margin-top: 6px; }
+
+    /* Bullet style */
+    .bullet-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .bullet-list li { display: flex; gap: 10px; align-items: flex-start; }
+    .bullet-list li::before { content: ''; width: 5px; height: 5px; background: var(--accent-red); border-radius: 50%; margin-top: 7px; flex-shrink: 0; }
+
+    /* Phase badge */
+    .phase-badge {
+      display: inline-block; padding: 4px 14px; border: 1.5px solid var(--accent-red);
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--accent-red); border-radius: 2px; margin-bottom: 12px;
+    }
+    .phase-badge-light { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.6); }
+
+    /* Diagram block */
+    .diagram-block {
+      background: var(--gray-lightest); border: 1px solid var(--gray-light);
+      border-radius: 4px; padding: 16px; text-align: center;
+    }
+    .diagram-block-dark {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px; padding: 16px; text-align: center;
+    }
+
+    /* Flywheel diagram */
+    .flywheel { position: relative; width: 320px; height: 320px; margin: 0 auto; }
+    .flywheel-ring {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      border: 2px dashed var(--gray-medium); border-radius: 50%;
+    }
+    .flywheel-node {
+      position: absolute; width: 140px; padding: 12px;
+      background: var(--blueprint-blue); color: var(--white);
+      border-radius: 4px; text-align: center; font-size: 11px;
+      font-family: var(--font-primary); font-weight: 600;
+      border-left: 3px solid var(--accent-red);
+    }
+    .flywheel-node .node-num {
+      font-family: var(--font-mono); font-size: 9px; color: var(--accent-red);
+      letter-spacing: 1px; margin-bottom: 4px;
+    }
+
+    /* Step cards */
+    .step-card {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px; padding: 16px; border-top: 3px solid var(--accent-red);
+    }
+    .step-card-light {
+      background: var(--gray-lightest); border: 1px solid var(--gray-light);
+      border-radius: 4px; padding: 16px; border-top: 3px solid var(--accent-red);
+    }
+    .step-num {
+      font-family: var(--font-mono); font-size: 22px; font-weight: 500;
+      color: var(--accent-red); margin-bottom: 6px;
+    }
+
+    /* Navigation */
+    .nav-controls { position: fixed; bottom: 20px; right: 20px; display: flex; align-items: center; gap: 12px; z-index: 100; }
+    .nav-controls button {
+      background: var(--accent-red); color: var(--white); border: none;
+      width: 36px; height: 36px; border-radius: 4px; cursor: pointer;
+      font-size: 14px; display: flex; align-items: center; justify-content: center;
+      opacity: 0.9; transition: opacity 0.2s;
+    }
+    .nav-controls button:hover { opacity: 1; }
+    .slide-counter { font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.6); }
+
+    /* Footer */
+    .slide-footer {
+      position: absolute; bottom: 16px; left: 80px; right: 80px;
+      display: flex; justify-content: space-between; align-items: center; z-index: 5;
+    }
+    .slide-footer .logo-text { font-family: var(--font-primary); font-weight: 600; font-size: 13px; letter-spacing: 1px; }
+    .slide-footer .page-num { font-family: var(--font-mono); font-size: 10px; }
+
+    /* Isometric block styles */
+    .iso-block {
+      position: relative; width: 120px; height: 80px;
+      background: var(--blueprint-blue); border: 1px solid rgba(255,255,255,0.15);
+      transform: skewY(-5deg); border-radius: 2px;
+    }
+    .iso-block::before {
+      content: ''; position: absolute; top: -12px; left: 0; right: 0; height: 12px;
+      background: rgba(255,255,255,0.08); transform: skewX(-40deg);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Connector arrow */
+    .connector { display: flex; align-items: center; justify-content: center; color: var(--accent-red); font-size: 20px; }
+
+    /* Responsive */
+    @media (max-width: 1300px) { .presentation { transform: scale(0.75); } }
+    @media (max-width: 1000px) { .presentation { transform: scale(0.55); } }
+  </style>
+</head>
+<body>
+  <div class="presentation" id="presentation">
+
+    <!-- ========================================== -->
+    <!-- SLIDE 1: COVER                             -->
+    <!-- ========================================== -->
+    <div class="slide bg-dark active" data-slide="1">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column; justify-content:center;">
+        <span class="mono-label" style="color:rgba(255,255,255,0.4);">fig. 01 — cover</span>
+
+        <!-- Isometric blocks diagram -->
+        <div style="position:absolute; top:60px; right:80px; opacity:0.15;">
+          <svg width="300" height="200" viewBox="0 0 300 200">
+            <g transform="translate(50,120)">
+              <polygon points="0,0 80,-20 160,0 80,20" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+              <polygon points="0,0 0,-40 80,-60 80,-20" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+              <polygon points="80,-20 80,-60 160,-40 160,0" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+              <polygon points="0,0 80,-20 160,0 80,20" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            </g>
+            <g transform="translate(80,90)">
+              <polygon points="0,0 80,-20 160,0 80,20" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+              <polygon points="0,0 0,-40 80,-60 80,-20" fill="rgba(237,28,36,0.08)" stroke="rgba(237,28,36,0.3)" stroke-width="1"/>
+              <polygon points="80,-20 80,-60 160,-40 160,0" fill="rgba(237,28,36,0.12)" stroke="rgba(237,28,36,0.3)" stroke-width="1"/>
+              <polygon points="0,0 80,-20 160,0 80,20" fill="rgba(237,28,36,0.05)" stroke="rgba(237,28,36,0.3)" stroke-width="1"/>
+            </g>
+            <g transform="translate(30,150)">
+              <polygon points="0,0 80,-20 160,0 80,20" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+              <polygon points="0,0 0,-40 80,-60 80,-20" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+              <polygon points="80,-20 80,-60 160,-40 160,0" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+              <polygon points="0,0 80,-20 160,0 80,20" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+            </g>
+            <text x="130" y="88" fill="rgba(255,255,255,0.25)" font-family="JetBrains Mono" font-size="7" text-anchor="middle" letter-spacing="1">OPEN SOURCE</text>
+            <text x="110" y="118" fill="rgba(255,255,255,0.2)" font-family="JetBrains Mono" font-size="7" text-anchor="middle" letter-spacing="1">ECOSYSTEM</text>
+            <text x="90" y="148" fill="rgba(255,255,255,0.15)" font-family="JetBrains Mono" font-size="7" text-anchor="middle" letter-spacing="1">INFRASTRUCTURE</text>
+          </svg>
+        </div>
+
+        <h1 class="title-hero" style="color:var(--white); margin-top:20px; max-width:700px;">
+          Opensource<span style="color:var(--accent-red);">4</span>Development
+        </h1>
+        <div class="accent-line"></div>
+        <p class="body-text" style="color:rgba(255,255,255,0.7); max-width:550px;">
+          Transforming open source technologies into sector-wide standards across emerging markets.
+        </p>
+        <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end;">
+          <p class="mono-annotation" style="color:rgba(255,255,255,0.3);">Technology for Sovereign Nations</p>
+          <img src="assets/arxia-logo.png" alt="Arxia" style="height:40px; opacity:0.9;">
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 2: THE OPPORTUNITY                   -->
+    <!-- ========================================== -->
+    <div class="slide bg-light" data-slide="2">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <span class="mono-label">sec. 01 — opportunity</span>
+        <h2 class="title-slide" style="margin-top:8px;">The Opportunity: A Continent Ready for Digital Transformation</h2>
+        <div class="accent-line"></div>
+        <div class="three-column" style="flex:1; align-items:stretch;">
+          <!-- The Landscape -->
+          <div style="display:flex; flex-direction:column;">
+            <div style="background:var(--blueprint-blue); color:var(--white); padding:10px 14px; border-radius:3px 3px 0 0;">
+              <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; opacity:0.6;">01</span>
+              <h3 style="font-size:14px; font-weight:600; margin-top:2px;">The Landscape</h3>
+            </div>
+            <div style="background:var(--gray-lightest); border:1px solid var(--gray-light); border-top:none; padding:14px; flex:1; border-radius:0 0 3px 3px;">
+              <p class="body-text" style="font-size:12.5px;">Africa's digital economy is experiencing unprecedented growth. Emerging markets are digitizing rapidly, driven by mobile penetration, expanding internet access, and government commitments to digital infrastructure.</p>
+            </div>
+          </div>
+          <!-- The Problem -->
+          <div style="display:flex; flex-direction:column;">
+            <div style="background:var(--blueprint-blue); color:var(--white); padding:10px 14px; border-radius:3px 3px 0 0;">
+              <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; opacity:0.6;">02</span>
+              <h3 style="font-size:14px; font-weight:600; margin-top:2px;">The Problem</h3>
+            </div>
+            <div style="background:var(--gray-lightest); border:1px solid var(--gray-light); border-top:none; padding:14px; flex:1; border-radius:0 0 3px 3px;">
+              <p class="body-text" style="font-size:12.5px;">Higher Education and Public Administration sectors remain fragmented, relying on disjointed proprietary tools or lacking standardized infrastructure entirely. This creates inefficiency, drives up costs, and limits scalability.</p>
+            </div>
+          </div>
+          <!-- The Vision -->
+          <div style="display:flex; flex-direction:column;">
+            <div style="background:var(--accent-red); color:var(--white); padding:10px 14px; border-radius:3px 3px 0 0;">
+              <span style="font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; opacity:0.8;">03</span>
+              <h3 style="font-size:14px; font-weight:600; margin-top:2px;">The Vision</h3>
+            </div>
+            <div style="background:var(--gray-lightest); border:1px solid var(--gray-light); border-top:none; padding:14px; flex:1; border-radius:0 0 3px 3px;">
+              <p class="body-text" style="font-size:12.5px;">Transform open source technologies into the default "Operating System" for entire sectors—from top-tier universities to vocational centers and national ministries. Create unified, sustainable ecosystems that serve millions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:var(--blueprint-blue);">arxia</span>
+        <span class="page-num" style="color:var(--gray-medium);">02</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 3: SERVICE MODEL                     -->
+    <!-- ========================================== -->
+    <div class="slide bg-blue" data-slide="3">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <span class="mono-label" style="color:rgba(255,255,255,0.4);">sec. 02 — service model</span>
+        <h2 class="title-slide" style="color:var(--white); margin-top:8px; font-size:26px;">Our Service Model: Open-source4Development</h2>
+        <div class="accent-line"></div>
+        <p class="body-text" style="color:rgba(255,255,255,0.6); max-width:700px; font-size:13px; margin-bottom:24px;">
+          We don't just deploy software. We engineer complete industry transformations by converting open source technologies into sector-wide standards.
+        </p>
+        <div class="three-column" style="flex:1;">
+          <div class="step-card">
+            <div class="step-num">01</div>
+            <h3 style="font-family:var(--font-primary); font-weight:600; font-size:15px; color:var(--white); margin-bottom:8px;">Strategic Promotion</h3>
+            <p class="body-text" style="color:rgba(255,255,255,0.5); font-size:12px;">Engage industry leaders and decision-makers. Position technology within national development priorities.</p>
+            <!-- Icon: megaphone/broadcast -->
+            <svg width="60" height="40" viewBox="0 0 60 40" style="margin-top:14px; opacity:0.4;">
+              <circle cx="12" cy="20" r="6" fill="none" stroke="var(--white)" stroke-width="1"/>
+              <path d="M18,20 L40,8 L40,32 Z" fill="none" stroke="var(--white)" stroke-width="1"/>
+              <line x1="44" y1="14" x2="55" y2="8" stroke="var(--accent-red)" stroke-width="1"/>
+              <line x1="44" y1="20" x2="58" y2="20" stroke="var(--accent-red)" stroke-width="1"/>
+              <line x1="44" y1="26" x2="55" y2="32" stroke="var(--accent-red)" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="step-card">
+            <div class="step-num">02</div>
+            <h3 style="font-family:var(--font-primary); font-weight:600; font-size:15px; color:var(--white); margin-bottom:8px;">Ecosystem Building</h3>
+            <p class="body-text" style="color:rgba(255,255,255,0.5); font-size:12px;">Create sustainable local capacity and supply. Build training ecosystems and developer communities.</p>
+            <!-- Icon: network nodes -->
+            <svg width="60" height="40" viewBox="0 0 60 40" style="margin-top:14px; opacity:0.4;">
+              <circle cx="30" cy="10" r="4" fill="none" stroke="var(--white)" stroke-width="1"/>
+              <circle cx="12" cy="30" r="4" fill="none" stroke="var(--white)" stroke-width="1"/>
+              <circle cx="48" cy="30" r="4" fill="none" stroke="var(--white)" stroke-width="1"/>
+              <circle cx="30" cy="30" r="3" fill="none" stroke="var(--accent-red)" stroke-width="1"/>
+              <line x1="30" y1="14" x2="12" y2="26" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+              <line x1="30" y1="14" x2="48" y2="26" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+              <line x1="30" y1="14" x2="30" y2="27" stroke="var(--accent-red)" stroke-width="1"/>
+              <line x1="16" y1="30" x2="27" y2="30" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+              <line x1="33" y1="30" x2="44" y2="30" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="step-card">
+            <div class="step-num">03</div>
+            <h3 style="font-family:var(--font-primary); font-weight:600; font-size:15px; color:var(--white); margin-bottom:8px;">Anchor Implementation</h3>
+            <p class="body-text" style="color:rgba(255,255,255,0.5); font-size:12px;">Deploy reference projects that drive adoption. Create market-defining showcases at national scale.</p>
+            <!-- Icon: building/deploy -->
+            <svg width="60" height="40" viewBox="0 0 60 40" style="margin-top:14px; opacity:0.4;">
+              <rect x="8" y="20" width="16" height="18" fill="none" stroke="var(--white)" stroke-width="1" rx="1"/>
+              <rect x="22" y="12" width="16" height="26" fill="none" stroke="var(--white)" stroke-width="1" rx="1"/>
+              <rect x="36" y="6" width="16" height="32" fill="none" stroke="var(--accent-red)" stroke-width="1" rx="1"/>
+              <line x1="24" y1="18" x2="36" y2="18" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" stroke-dasharray="2,1"/>
+              <line x1="10" y1="26" x2="22" y2="26" stroke="rgba(255,255,255,0.3)" stroke-width="0.5" stroke-dasharray="2,1"/>
+            </svg>
+          </div>
+        </div>
+        <!-- Process arrow -->
+        <div style="display:flex; justify-content:center; align-items:center; gap:20px; margin-top:20px; padding:20px 28px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:6px;">
+          <span style="font-family:var(--font-mono); font-size:15px; font-weight:500; letter-spacing:1px; color:rgba(255,255,255,0.85);">promote</span>
+          <span style="color:var(--accent-red); font-size:22px; font-weight:600;">→</span>
+          <span style="font-family:var(--font-mono); font-size:15px; font-weight:500; letter-spacing:1px; color:rgba(255,255,255,0.85);">build capacity</span>
+          <span style="color:var(--accent-red); font-size:22px; font-weight:600;">→</span>
+          <span style="font-family:var(--font-mono); font-size:15px; font-weight:500; letter-spacing:1px; color:rgba(255,255,255,0.85);">implement</span>
+          <span style="color:var(--accent-red); font-size:22px; font-weight:600;">→</span>
+          <span style="font-family:var(--font-mono); font-size:15px; font-weight:500; letter-spacing:1px; color:rgba(255,255,255,0.85);">scale</span>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:rgba(255,255,255,0.4);">arxia</span>
+        <span class="page-num" style="color:rgba(255,255,255,0.3);">03</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 4: CASE STUDY — RWANDA               -->
+    <!-- ========================================== -->
+    <div class="slide bg-light" data-slide="4">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <span class="mono-label">sec. 03 — case study</span>
+        <h2 class="title-slide" style="margin-top:8px; font-size:24px;">Case Study: TYPO3 as Rwanda's Digital Public Good</h2>
+        <div class="accent-line"></div>
+        <div class="body-text" style="max-width:700px; font-size:13px; margin-bottom:16px;">
+          <p style="margin-bottom:10px;"><strong>Problem:</strong> The Government of Rwanda was looking to remake all of the web portals of the government using a single framework in a centralized and sustainable way.</p>
+          <p style="margin-bottom:10px;"><strong>Our Solution:</strong> We engaged with the local government to propose the OpenSource4Development approach. We partnered with their local ecosystem, trained local companies in the TYPO3 CMS technology and framework, kickstarted the local TYPO3 Community, and co-built all of the government websites with local professionals.</p>
+          <p style="margin-bottom:0;"><strong>Results:</strong> We didn't just build websites—we standardized the digital presence for an entire nation. This flagship project demonstrates our methodology's power to create lasting, transformative change at national scale.</p>
+        </div>
+        <!-- Metrics -->
+        <div class="three-column" style="margin-bottom:20px;">
+          <div class="metric-card" style="text-align:center;">
+            <div class="value">200+</div>
+            <div class="label">Government Portals</div>
+            <p class="body-text" style="font-size:11px; margin-top:8px;">Deployed across Ministries, Agencies, and District offices nationwide</p>
+          </div>
+          <div class="metric-card" style="text-align:center;">
+            <div class="value" style="color:var(--accent-red);">100%</div>
+            <div class="label">Local Sustainability</div>
+            <p class="body-text" style="font-size:11px; margin-top:8px;">Thriving market of local agencies and developers who now independently sustain the ecosystem</p>
+          </div>
+          <div class="metric-card" style="text-align:center;">
+            <div class="value">#1</div>
+            <div class="label">Recognized Standard</div>
+            <p class="body-text" style="font-size:11px; margin-top:8px;">TYPO3 established as the official Digital Public Good and reference implementation</p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:var(--blueprint-blue);">arxia</span>
+        <span class="page-num" style="color:var(--gray-medium);">04</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 5: METHODOLOGY FLYWHEEL              -->
+    <!-- ========================================== -->
+    <div class="slide bg-dark" data-slide="5">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <span class="mono-label" style="color:rgba(255,255,255,0.4);">sec. 04 — methodology</span>
+        <h2 class="title-slide" style="color:var(--white); margin-top:8px; font-size:24px;">The Methodology: A Flywheel for Market Dominance</h2>
+        <div class="accent-line"></div>
+        <div class="two-column" style="flex:1; align-items:center;">
+          <!-- Left: flywheel diagram -->
+          <div style="display:flex; justify-content:center; align-items:center;">
+            <svg width="340" height="340" viewBox="0 0 340 340">
+              <!-- Outer ring -->
+              <circle cx="170" cy="170" r="140" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="30"/>
+              <!-- Dashed inner ring -->
+              <circle cx="170" cy="170" r="100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4,4"/>
+              <!-- Arrows on ring -->
+              <path d="M170,30 A140,140 0 0,1 300,230" fill="none" stroke="rgba(237,28,36,0.5)" stroke-width="2" marker-end="url(#arrowRed)"/>
+              <path d="M300,230 A140,140 0 0,1 40,230" fill="none" stroke="rgba(237,28,36,0.5)" stroke-width="2" marker-end="url(#arrowRed)"/>
+              <path d="M40,230 A140,140 0 0,1 170,30" fill="none" stroke="rgba(237,28,36,0.5)" stroke-width="2" marker-end="url(#arrowRed)"/>
+              <defs><marker id="arrowRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0,0 8,3 0,6" fill="var(--accent-red)" opacity="0.6"/></marker></defs>
+              <!-- Node 1: Strategic Promotion (top) -->
+              <rect x="110" y="10" width="120" height="48" rx="4" fill="var(--blueprint-blue)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <text x="170" y="30" fill="var(--accent-red)" font-family="JetBrains Mono" font-size="9" text-anchor="middle">01</text>
+              <text x="170" y="46" fill="var(--white)" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle">Strategic Promotion</text>
+              <!-- Node 2: Ecosystem Building (bottom-right) -->
+              <rect x="240" y="220" width="120" height="48" rx="4" fill="var(--blueprint-blue)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <text x="300" y="240" fill="var(--accent-red)" font-family="JetBrains Mono" font-size="9" text-anchor="middle">02</text>
+              <text x="300" y="256" fill="var(--white)" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle">Ecosystem Building</text>
+              <!-- Node 3: Implementation (bottom-left) -->
+              <rect x="-20" y="220" width="140" height="48" rx="4" fill="var(--blueprint-blue)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+              <text x="50" y="240" fill="var(--accent-red)" font-family="JetBrains Mono" font-size="9" text-anchor="middle">03</text>
+              <text x="50" y="256" fill="var(--white)" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle">High-Impact Delivery</text>
+              <!-- Center label -->
+              <text x="170" y="168" fill="rgba(255,255,255,0.15)" font-family="JetBrains Mono" font-size="10" text-anchor="middle" letter-spacing="3">FLYWHEEL</text>
+              <text x="170" y="182" fill="rgba(255,255,255,0.1)" font-family="JetBrains Mono" font-size="7" text-anchor="middle" letter-spacing="1">SELF-REINFORCING</text>
+            </svg>
+          </div>
+          <!-- Right: text -->
+          <div>
+            <p class="body-text" style="color:rgba(255,255,255,0.6); font-size:13px; margin-bottom:20px;">
+              Our approach creates a self-sustaining cycle where each phase amplifies the others.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+              <div style="display:flex; gap:12px; align-items:flex-start;">
+                <span style="font-family:var(--font-mono); font-size:14px; color:var(--accent-red); font-weight:500; min-width:22px;">01</span>
+                <p class="body-text" style="color:rgba(255,255,255,0.5); font-size:12px;">Engage industry leaders and frame technology within development priorities</p>
+              </div>
+              <div style="display:flex; gap:12px; align-items:flex-start;">
+                <span style="font-family:var(--font-mono); font-size:14px; color:var(--accent-red); font-weight:500; min-width:22px;">02</span>
+                <p class="body-text" style="color:rgba(255,255,255,0.5); font-size:12px;">Create local talent pools through ecosystem partnerships and trainings</p>
+              </div>
+              <div style="display:flex; gap:12px; align-items:flex-start;">
+                <span style="font-family:var(--font-mono); font-size:14px; color:var(--accent-red); font-weight:500; min-width:22px;">03</span>
+                <p class="body-text" style="color:rgba(255,255,255,0.5); font-size:12px;">Deploy country-level projects that become reference implementations</p>
+              </div>
+            </div>
+            <div style="margin-top:20px; padding:12px 14px; background:rgba(255,255,255,0.03); border-left:2px solid var(--accent-red); border-radius:0 3px 3px 0;">
+              <p class="body-text" style="color:rgba(255,255,255,0.4); font-size:11px; font-style:italic;">
+                Each successful implementation creates more evangelists, more trained developers, and more case studies—making the next phase easier and more impactful.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:rgba(255,255,255,0.4);">arxia</span>
+        <span class="page-num" style="color:rgba(255,255,255,0.3);">05</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 6: PHASE 1 — STRATEGIC PROMOTION     -->
+    <!-- ========================================== -->
+    <div class="slide bg-light" data-slide="6">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <div class="phase-badge">Phase 1</div>
+        <h2 class="title-slide" style="margin-top:4px; font-size:24px;">Strategic Promotion: Connecting with Decision Makers</h2>
+        <div class="accent-line"></div>
+        <div class="two-column" style="flex:1;">
+          <div>
+            <p class="body-text" style="font-size:13px; margin-bottom:16px;">
+              Engage directly with Industry Leaders who shape sector-wide standards. Our approach positions open source technologies not as mere tools, but as strategic choices aligned with national development priorities.
+            </p>
+            <h3 class="title-section" style="font-size:15px; margin-bottom:10px;">Initiatives</h3>
+            <ul class="bullet-list" style="font-size:13px;">
+              <li><span class="body-text" style="font-size:12px;"><strong style="color:var(--blueprint-blue);">Events:</strong> Organize events with local ecosystems engaging local stakeholders: authorities, ecosystems, development agencies.</span></li>
+              <li><span class="body-text" style="font-size:12px;"><strong style="color:var(--blueprint-blue);">Community events:</strong> Coaching, trainings, bootcamps and hackathons for technical communities.</span></li>
+              <li><span class="body-text" style="font-size:12px;"><strong style="color:var(--blueprint-blue);">Participation:</strong> We participate in major events ideal for our target audience.</span></li>
+            </ul>
+            <div style="margin-top:14px; padding:10px 14px; background:var(--gray-lightest); border-left:3px solid var(--accent-red); border-radius:0 3px 3px 0;">
+              <p class="mono-annotation" style="color:var(--blueprint-blue); font-weight:500; font-size:10px; margin-bottom:2px;">KEY PRINCIPLE</p>
+              <p class="body-text" style="font-size:12px;">We promote a <strong style="color:var(--blueprint-blue);">framework</strong>, not a technology. Our approach focuses on promoting principles and good practices, built around a technology.</p>
+            </div>
+          </div>
+          <!-- Right: stakeholder engagement diagram -->
+          <div style="display:flex; align-items:center; justify-content:center;">
+            <svg width="380" height="360" viewBox="0 0 380 360">
+              <!-- Center node -->
+              <circle cx="190" cy="180" r="45" fill="var(--blueprint-blue)" opacity="0.1" stroke="var(--blueprint-blue)" stroke-width="1.5"/>
+              <text x="190" y="175" fill="var(--blueprint-blue)" font-family="JetBrains Mono" font-size="8" text-anchor="middle" letter-spacing="1">OPEN SOURCE</text>
+              <text x="190" y="190" fill="var(--blueprint-blue)" font-family="JetBrains Mono" font-size="8" text-anchor="middle" letter-spacing="1">FRAMEWORK</text>
+              <!-- Top: Government -->
+              <rect x="140" y="20" width="100" height="40" rx="3" fill="var(--blueprint-blue)"/>
+              <text x="190" y="44" fill="var(--white)" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle">Government</text>
+              <line x1="190" y1="60" x2="190" y2="135" stroke="var(--gray-medium)" stroke-width="1" stroke-dasharray="4,3"/>
+              <circle cx="190" cy="135" r="3" fill="var(--accent-red)"/>
+              <!-- Left: Dev Agencies -->
+              <rect x="10" y="250" width="110" height="40" rx="3" fill="var(--blueprint-blue)"/>
+              <text x="65" y="274" fill="var(--white)" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle">Dev Agencies</text>
+              <line x1="120" y1="260" x2="160" y2="210" stroke="var(--gray-medium)" stroke-width="1" stroke-dasharray="4,3"/>
+              <circle cx="160" cy="210" r="3" fill="var(--accent-red)"/>
+              <!-- Right: Local Ecosystem -->
+              <rect x="260" y="250" width="110" height="40" rx="3" fill="var(--blueprint-blue)"/>
+              <text x="315" y="274" fill="var(--white)" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle">Local Ecosystem</text>
+              <line x1="260" y1="260" x2="220" y2="210" stroke="var(--gray-medium)" stroke-width="1" stroke-dasharray="4,3"/>
+              <circle cx="220" cy="210" r="3" fill="var(--accent-red)"/>
+              <!-- Bottom: Universities -->
+              <rect x="140" y="320" width="100" height="40" rx="3" fill="var(--blueprint-blue)" opacity="0.7"/>
+              <text x="190" y="344" fill="var(--white)" font-family="Inter" font-size="10" font-weight="600" text-anchor="middle">Universities</text>
+              <line x1="190" y1="320" x2="190" y2="225" stroke="var(--gray-medium)" stroke-width="1" stroke-dasharray="4,3"/>
+              <circle cx="190" cy="225" r="3" fill="var(--accent-red)"/>
+              <!-- Annotation -->
+              <text x="190" y="130" fill="var(--gray-medium)" font-family="JetBrains Mono" font-size="7" text-anchor="middle">fig. 06 — stakeholder engagement</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:var(--blueprint-blue);">arxia</span>
+        <span class="page-num" style="color:var(--gray-medium);">06</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 7: PHASE 2 — ECOSYSTEM BUILDING      -->
+    <!-- ========================================== -->
+    <div class="slide bg-light" data-slide="7">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <div class="phase-badge">Phase 2</div>
+        <h2 class="title-slide" style="margin-top:4px; font-size:22px;">Community & Capacity Building: Creating Local Capacity</h2>
+        <div class="accent-line"></div>
+        <p class="body-text" style="font-size:12px; max-width:750px; margin-bottom:16px;">
+          An industry standard requires more than great technology—it demands a robust local talent pool to implement, customize, and support it. We build sustainable supply by creating comprehensive training ecosystems.
+        </p>
+        <div class="four-column" style="flex:1;">
+          <div class="step-card-light">
+            <svg width="36" height="36" viewBox="0 0 36 36" style="margin-bottom:8px;">
+              <rect x="2" y="6" width="32" height="24" rx="2" fill="none" stroke="var(--blueprint-blue)" stroke-width="1.5"/>
+              <line x1="2" y1="14" x2="34" y2="14" stroke="var(--blueprint-blue)" stroke-width="1"/>
+              <circle cx="8" cy="10" r="2" fill="var(--accent-red)"/>
+              <rect x="6" y="18" width="10" height="2" rx="1" fill="var(--gray-medium)"/>
+              <rect x="6" y="23" width="16" height="2" rx="1" fill="var(--gray-medium)"/>
+            </svg>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:12px; color:var(--blueprint-blue); margin-bottom:6px;">University Curriculum</h4>
+            <p class="body-text" style="font-size:11px;">Partner with Computer Science departments to embed technology into coursework, capstone projects, and research. Students graduate job-ready.</p>
+          </div>
+          <div class="step-card-light">
+            <svg width="36" height="36" viewBox="0 0 36 36" style="margin-bottom:8px;">
+              <path d="M18,4 L32,12 L32,28 L18,32 L4,28 L4,12 Z" fill="none" stroke="var(--blueprint-blue)" stroke-width="1.5"/>
+              <circle cx="18" cy="18" r="5" fill="none" stroke="var(--accent-red)" stroke-width="1.5"/>
+              <text x="18" y="21" fill="var(--accent-red)" font-family="JetBrains Mono" font-size="6" text-anchor="middle">✓</text>
+            </svg>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:12px; color:var(--blueprint-blue); margin-bottom:6px;">Professional Bootcamps</h4>
+            <p class="body-text" style="font-size:11px;">Intensive training for local software agencies and freelance developers, turning them into certified implementers who service the growing market.</p>
+          </div>
+          <div class="step-card-light">
+            <svg width="36" height="36" viewBox="0 0 36 36" style="margin-bottom:8px;">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="var(--blueprint-blue)" stroke-width="1.5"/>
+              <text x="10" y="16" fill="var(--blueprint-blue)" font-family="JetBrains Mono" font-size="7">FR</text>
+              <text x="20" y="16" fill="var(--gray-medium)" font-family="JetBrains Mono" font-size="7">SW</text>
+              <text x="14" y="25" fill="var(--accent-red)" font-family="JetBrains Mono" font-size="7">EN</text>
+            </svg>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:12px; color:var(--blueprint-blue); margin-bottom:6px;">Localization</h4>
+            <p class="body-text" style="font-size:11px;">Translate documentation, user interfaces, and training materials into French, Swahili, and other regional languages—removing barriers to adoption.</p>
+          </div>
+          <div class="step-card-light">
+            <svg width="36" height="36" viewBox="0 0 36 36" style="margin-bottom:8px;">
+              <circle cx="10" cy="14" r="4" fill="none" stroke="var(--blueprint-blue)" stroke-width="1"/>
+              <circle cx="26" cy="14" r="4" fill="none" stroke="var(--blueprint-blue)" stroke-width="1"/>
+              <circle cx="18" cy="26" r="4" fill="none" stroke="var(--accent-red)" stroke-width="1"/>
+              <line x1="14" y1="14" x2="22" y2="14" stroke="var(--gray-medium)" stroke-width="0.8"/>
+              <line x1="12" y1="18" x2="16" y2="23" stroke="var(--gray-medium)" stroke-width="0.8"/>
+              <line x1="24" y1="18" x2="20" y2="23" stroke="var(--gray-medium)" stroke-width="0.8"/>
+            </svg>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:12px; color:var(--blueprint-blue); margin-bottom:6px;">Community</h4>
+            <p class="body-text" style="font-size:11px;">Local web platforms, forums, yearly events. Everything is community-driven and set up to be managed by the community itself.</p>
+          </div>
+        </div>
+        <div style="margin-top:12px; padding:10px 16px; background:var(--blueprint-blue); border-radius:3px;">
+          <p style="font-family:var(--font-mono); font-size:10px; color:rgba(255,255,255,0.5); letter-spacing:1px; text-transform:uppercase;">Result</p>
+          <p class="body-text" style="color:rgba(255,255,255,0.7); font-size:12px;">A self-sustaining community of hundreds of trained developers, consultants, and agencies ready to service industry demand—creating a competitive marketplace that drives down costs while maintaining quality.</p>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:var(--blueprint-blue);">arxia</span>
+        <span class="page-num" style="color:var(--gray-medium);">07</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 8: PHASE 3 — ANCHOR PROJECTS         -->
+    <!-- ========================================== -->
+    <div class="slide bg-blue" data-slide="8">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <div class="phase-badge phase-badge-light">Phase 3</div>
+        <h2 class="title-slide" style="color:var(--white); margin-top:4px; font-size:22px;">Anchor Projects & Co-Creation: Building the Reference</h2>
+        <div class="accent-line"></div>
+        <p class="body-text" style="color:rgba(255,255,255,0.55); font-size:12px; max-width:700px; margin-bottom:16px;">
+          We identify and execute transformative Anchor Projects that demonstrate the technology's full potential at scale. These are market-defining showcases that establish the standard for an entire industry.
+        </p>
+        <p class="mono-label" style="color:rgba(255,255,255,0.35); margin-bottom:12px; font-size:10px;">The Co-Creation Model</p>
+        <!-- 4-step flow -->
+        <div class="four-column" style="flex:1;">
+          <div class="step-card" style="border-top-color:var(--accent-red);">
+            <div class="step-num" style="font-size:18px;">01</div>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:13px; color:var(--white); margin-bottom:6px;">Identify Flagship</h4>
+            <p class="body-text" style="color:rgba(255,255,255,0.45); font-size:11px;">Select high-visibility projects like National E-Learning Platforms or Top-Tier University Digital Campuses.</p>
+          </div>
+          <div class="step-card" style="border-top-color:var(--accent-red);">
+            <div class="step-num" style="font-size:18px;">02</div>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:13px; color:var(--white); margin-bottom:6px;">Partner Locally</h4>
+            <p class="body-text" style="color:rgba(255,255,255,0.45); font-size:11px;">Hire and collaborate with local firms to co-deliver—we don't build in silos.</p>
+          </div>
+          <div class="step-card" style="border-top-color:var(--accent-red);">
+            <div class="step-num" style="font-size:18px;">03</div>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:13px; color:var(--white); margin-bottom:6px;">Train On-the-Job</h4>
+            <p class="body-text" style="color:rgba(255,255,255,0.45); font-size:11px;">Transfer expertise through real project work, creating battle-tested local implementers.</p>
+          </div>
+          <div class="step-card" style="border-top-color:var(--accent-red);">
+            <div class="step-num" style="font-size:18px;">04</div>
+            <h4 style="font-family:var(--font-primary); font-weight:600; font-size:13px; color:var(--white); margin-bottom:6px;">Market Ripple</h4>
+            <p class="body-text" style="color:rgba(255,255,255,0.45); font-size:11px;">Local partners leverage new skills to win contracts across the sector.</p>
+          </div>
+        </div>
+        <!-- Ripple diagram -->
+        <div style="display:flex; justify-content:center; margin-top:14px;">
+          <svg width="500" height="50" viewBox="0 0 500 50">
+            <rect x="10" y="12" width="90" height="26" rx="3" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <text x="55" y="29" fill="var(--white)" font-family="JetBrains Mono" font-size="8" text-anchor="middle">ANCHOR</text>
+            <line x1="105" y1="25" x2="140" y2="25" stroke="var(--accent-red)" stroke-width="1.5" marker-end="url(#arrW)"/>
+            <rect x="145" y="8" width="80" height="34" rx="3" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <text x="185" y="22" fill="rgba(255,255,255,0.6)" font-family="JetBrains Mono" font-size="7" text-anchor="middle">UNIVERSITIES</text>
+            <text x="185" y="34" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono" font-size="7" text-anchor="middle">TVETS</text>
+            <line x1="230" y1="25" x2="260" y2="25" stroke="var(--accent-red)" stroke-width="1.5" marker-end="url(#arrW)"/>
+            <rect x="265" y="8" width="80" height="34" rx="3" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+            <text x="305" y="22" fill="rgba(255,255,255,0.5)" font-family="JetBrains Mono" font-size="7" text-anchor="middle">PRIVATE</text>
+            <text x="305" y="34" fill="rgba(255,255,255,0.35)" font-family="JetBrains Mono" font-size="7" text-anchor="middle">SCHOOLS</text>
+            <line x1="350" y1="25" x2="380" y2="25" stroke="var(--accent-red)" stroke-width="1.5" marker-end="url(#arrW)"/>
+            <rect x="385" y="8" width="80" height="34" rx="3" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+            <text x="425" y="22" fill="rgba(255,255,255,0.4)" font-family="JetBrains Mono" font-size="7" text-anchor="middle">NGOS</text>
+            <text x="425" y="34" fill="rgba(255,255,255,0.3)" font-family="JetBrains Mono" font-size="7" text-anchor="middle">VOCATIONAL</text>
+            <defs><marker id="arrW" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto"><polygon points="0,0 6,2.5 0,5" fill="var(--accent-red)"/></marker></defs>
+            <text x="250" y="48" fill="rgba(255,255,255,0.2)" font-family="JetBrains Mono" font-size="6" text-anchor="middle">fig. 08 — market ripple effect // momentum builds continuously</text>
+          </svg>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:rgba(255,255,255,0.4);">arxia</span>
+        <span class="page-num" style="color:rgba(255,255,255,0.3);">08</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 9: WHY OPENEDX                       -->
+    <!-- ========================================== -->
+    <div class="slide bg-light" data-slide="9">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <span class="mono-label">sec. 05 — edtech opportunity</span>
+        <h2 class="title-slide" style="margin-top:8px; font-size:24px;">Why OpenEdX? The African EdTech Opportunity</h2>
+        <div class="accent-line"></div>
+        <div class="two-column" style="flex:1;">
+          <!-- Left: context + gap -->
+          <div>
+            <h3 class="title-section" style="font-size:14px; margin-bottom:8px;">The African Context</h3>
+            <ul class="bullet-list">
+              <li><span class="body-text" style="font-size:12px;">Africa's education sector is undergoing massive transformation. Universities expanding, governments investing in TVETs.</span></li>
+              <li><span class="body-text" style="font-size:12px;">Most of the world's young population is in Africa and will continue to be for the next 100 years.</span></li>
+              <li><span class="body-text" style="font-size:12px;">Billions of dollars being invested from international development agencies.</span></li>
+              <li><span class="body-text" style="font-size:12px;">Corporations need scalable upskilling solutions. Demand for hybrid learning platforms has never been greater.</span></li>
+            </ul>
+            <h3 class="title-section" style="font-size:14px; margin-top:16px; margin-bottom:8px;">The Gap</h3>
+            <p class="body-text" style="font-size:12px;">Despite explosive demand, the market remains technologically underdeveloped.</p>
+          </div>
+          <!-- Right: demand matrix -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="background:var(--gray-lightest); border:1px solid var(--gray-light); padding:12px; border-radius:3px; border-left:3px solid var(--blueprint-blue);">
+              <p class="mono-annotation" style="color:var(--blueprint-blue); font-weight:500; font-size:9px;">UNIVERSITIES</p>
+              <p class="body-text" style="font-size:11px; margin-top:4px;">Need enterprise-grade platforms for tens of thousands of students</p>
+            </div>
+            <div style="background:var(--gray-lightest); border:1px solid var(--gray-light); padding:12px; border-radius:3px; border-left:3px solid var(--blueprint-blue);">
+              <p class="mono-annotation" style="color:var(--blueprint-blue); font-weight:500; font-size:9px;">TVETS</p>
+              <p class="body-text" style="font-size:11px; margin-top:4px;">Require practical, skills-based learning infrastructure</p>
+            </div>
+            <div style="background:var(--gray-lightest); border:1px solid var(--gray-light); padding:12px; border-radius:3px; border-left:3px solid var(--blueprint-blue);">
+              <p class="mono-annotation" style="color:var(--blueprint-blue); font-weight:500; font-size:9px;">CORPORATES</p>
+              <p class="body-text" style="font-size:11px; margin-top:4px;">Demand scalable employee development solutions</p>
+            </div>
+            <div style="background:var(--gray-lightest); border:1px solid var(--gray-light); padding:12px; border-radius:3px; border-left:3px solid var(--accent-red);">
+              <p class="mono-annotation" style="color:var(--accent-red); font-weight:500; font-size:9px;">GOVERNMENTS</p>
+              <p class="body-text" style="font-size:11px; margin-top:4px;">Seek sovereign, cost-effective national platforms</p>
+            </div>
+          </div>
+        </div>
+        <!-- Proposal box: centered, double size -->
+        <div style="display:flex; justify-content:center; align-items:center; margin-top:20px; flex:1; min-height:0;">
+          <div style="background:var(--blueprint-blue); padding:28px 40px; border-radius:6px; max-width:700px; text-align:center;">
+            <p class="mono-annotation" style="color:var(--accent-red); font-weight:500; font-size:18px; letter-spacing:1.5px;">THE PROPOSAL</p>
+            <p class="body-text" style="color:rgba(255,255,255,0.7); font-size:22px; margin-top:12px; line-height:1.4;">
+              Arxia will deploy the Open-source4Development framework to make OpenEdX the undisputed standard for African Education. We will build bridges between Universities, Government, and the Private Sector.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer">
+        <span class="logo-text" style="color:var(--blueprint-blue);">arxia</span>
+        <span class="page-num" style="color:var(--gray-medium);">09</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 10: PARTNERSHIP & NEXT STEPS          -->
+    <!-- ========================================== -->
+    <div class="slide bg-dark" data-slide="10">
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+      <div class="slide-content" style="display:flex; flex-direction:column;">
+        <span class="mono-label" style="color:rgba(255,255,255,0.4);">sec. 06 — partnership</span>
+        <h2 class="title-slide" style="color:var(--white); margin-top:8px; font-size:24px;">Partnership for Expansion: Raccoon Gang + Arxia + OpenEdX</h2>
+        <div class="accent-line"></div>
+        <!-- Partnership columns -->
+        <div class="three-column" style="margin-bottom:16px;">
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:16px; border-top:3px solid rgba(255,255,255,0.3);">
+            <p class="mono-label" style="color:rgba(255,255,255,0.35); font-size:9px; margin-bottom:8px;">01 — WE PROVIDE</p>
+            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:8px;">
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.55); font-size:11px;">Proven transformation strategy and methodology</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.55); font-size:11px;">Boots on the ground across African markets</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.55); font-size:11px;">Network of government and institutional relationships</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.55); font-size:11px;">Domain expertise</span></li>
+            </ul>
+          </div>
+          <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:16px; border-top:3px solid rgba(255,255,255,0.3);">
+            <p class="mono-label" style="color:rgba(255,255,255,0.35); font-size:9px; margin-bottom:8px;">02 — RACCOON GANG PROVIDES</p>
+            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:8px;">
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.55); font-size:11px;">Technical leadership and implementation expertise</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.55); font-size:11px;">Technical capacity and experience in OpenEdX implementation</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.55); font-size:11px;">Top of the line training capacity</span></li>
+            </ul>
+          </div>
+          <div style="background:rgba(237,28,36,0.06); border:1px solid rgba(237,28,36,0.15); border-radius:4px; padding:16px; border-top:3px solid var(--accent-red);">
+            <p class="mono-label" style="color:var(--accent-red); font-size:9px; margin-bottom:8px; opacity:0.7;">03 — COMBINED OUTCOME</p>
+            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:8px;">
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.65); font-size:11px;">OpenEdX as the standard for African education</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.65); font-size:11px;">Millions of students and learners empowered</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.65); font-size:11px;">Sustainable local ecosystems across 10+ markets</span></li>
+              <li style="display:flex; gap:8px; align-items:flex-start;"><span style="width:4px; height:4px; background:var(--accent-red); border-radius:50%; margin-top:6px; flex-shrink:0;"></span><span class="body-text" style="color:rgba(255,255,255,0.65); font-size:11px;">A model for open source adoption worldwide</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="slide-footer" style="flex-direction:column; align-items:center; justify-content:center; gap:10px;">
+        <img src="assets/arxia-logo.png" alt="Arxia" style="height:36px; opacity:0.9;">
+        <div style="text-align:center;">
+          <p class="body-text" style="color:rgba(255,255,255,0.9); font-size:16px; font-weight:500; margin-bottom:4px;">Let's talk</p>
+          <a href="mailto:carlos.parker@arxia.com" style="color:var(--accent-red); font-family:var(--font-primary); font-size:14px; text-decoration:none;">carlos.parker@arxia.com</a>
+        </div>
+        <span class="page-num" style="color:rgba(255,255,255,0.3);">10</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NAVIGATION -->
+  <div class="nav-controls">
+    <button onclick="prevSlide()" aria-label="Previous slide">&#8592;</button>
+    <span class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">10</span></span>
+    <button onclick="nextSlide()" aria-label="Next slide">&#8594;</button>
+  </div>
+
+  <script>
+    const slides = document.querySelectorAll('.slide');
+    let current = 0;
+    function showSlide(n) {
+      slides[current].classList.remove('active');
+      current = (n + slides.length) % slides.length;
+      slides[current].classList.add('active');
+      document.getElementById('currentSlide').textContent = current + 1;
+    }
+    function nextSlide() { showSlide(current + 1); }
+    function prevSlide() { showSlide(current - 1); }
+    document.getElementById('totalSlides').textContent = slides.length;
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+      if (e.key === 'Home') { e.preventDefault(); showSlide(0); }
+      if (e.key === 'End') { e.preventDefault(); showSlide(slides.length - 1); }
+    });
+    function scalePresentation() {
+      const pres = document.getElementById('presentation');
+      const scaleX = window.innerWidth / 1280;
+      const scaleY = window.innerHeight / 720;
+      const scale = Math.min(scaleX, scaleY, 1);
+      pres.style.transform = `scale(${scale})`;
+    }
+    window.addEventListener('resize', scalePresentation);
+    scalePresentation();
+  </script>
+</body>
+</html>
