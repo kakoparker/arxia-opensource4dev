@@ -1,0 +1,9 @@
+{
+  "name": "arixa-opensource4development",
+  "version": "1.0.0",
+  "description": "Opensource4Development presentation",
+  "scripts": {
+    "dev": "npx serve -l 3000",
+    "start": "npx serve -l 3000"
+  }
+}
